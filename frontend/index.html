@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Inventory & Order Manager</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 24px; }
+    
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    h1 { font-size: 1.5rem; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 8px; }
+    .kpi-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+    .kpi-value { font-size: 1.4rem; font-weight: bold; color: var(--accent); }
+
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+    .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; }
+    
+    input[type="text"], select, input[type="number"] {
+      background: #0f172a; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 0.9rem;
+    }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; }
+
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .badge-instock { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+    .badge-lowstock { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .badge-outstock { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+    .btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    .btn-primary { background: #0284c7; color: white; }
+    .btn-primary:hover { background: #0369a1; }
+    .btn-edit { background: #3b82f6; color: white; padding: 4px 8px; margin-right: 4px; }
+    .btn-delete { background: var(--danger); color: white; padding: 4px 8px; }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; width: 100%; max-width: 420px; }
+    .modal h2 { margin-bottom: 16px; font-size: 1.2rem; }
+    .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 0.85rem; color: var(--text-muted); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Smart Inventory & Order Manager</h1>
+    <button class="btn btn-primary" onclick="openModal()">+ Add New Product</button>
+  </header>
+
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-title">Total Products</div>
+      <div class="kpi-value" id="kpi-total">0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Low Stock Alert</div>
+      <div class="kpi-value" id="kpi-low" style="color: var(--warning);">0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Out of Stock</div>
+      <div class="kpi-value" id="kpi-out" style="color: var(--danger);">0</div>
+    </div>
+  </section>
+
+  <main class="panel">
+    <div class="table-header">
+      <input type="text" id="searchInput" placeholder="Search product..." onkeyup="filterProducts()" style="width: 250px;">
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Stock Level</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="inventoryTable"></tbody>
+    </table>
+  </main>
+
+  <div class="modal-overlay" id="productModal">
+    <div class="modal">
+      <h2 id="modalTitle">Add New Product</h2>
+      <form id="productForm" onsubmit="saveProduct(event)">
+        <input type="hidden" id="productId">
+        
+        <div class="form-group">
+          <label for="pName">Product Name</label>
+          <input type="text" id="pName" required>
+        </div>
+
+        <div class="form-group">
+          <label for="pCategory">Category</label>
+          <select id="pCategory" required>
+            <option value="Electronics">Electronics</option>
+            <option value="Home & Kitchen">Home & Kitchen</option>
+            <option value="Apparel">Apparel</option>
+            <option value="Office Supplies">Office Supplies</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="pPrice">Price ($)</label>
+          <input type="number" id="pPrice" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+          <label for="pStock">Stock Quantity</label>
+          <input type="number" id="pStock" required>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn" style="background: var(--border); color: white;" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
