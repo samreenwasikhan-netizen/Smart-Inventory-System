@@ -4,6 +4,12 @@ A full-stack inventory management system built with a **C# ASP.NET Core Web API*
 
 ---
 
+## 📷 Screenshots
+
+<img width="1440" height="900" alt="Screenshot 2026-07-22 at 5 40 28 PM" src="https://github.com/user-attachments/assets/f4602b03-f461-4596-a34f-c782468062b4" />
+
+---
+
 ## 🌟 Features
 
 - **Real-Time KPI Tracking:** Summary metrics displaying total products, low-stock alerts, and out-of-stock counts.
@@ -20,4 +26,3 @@ A full-stack inventory management system built with a **C# ASP.NET Core Web API*
 - **Frontend:** HTML5, CSS3, JavaScript (Fetch API)
 - **Tooling:** VS Code, Git, GitHub
 
----
